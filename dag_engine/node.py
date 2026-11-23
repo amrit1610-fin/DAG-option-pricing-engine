@@ -51,7 +51,7 @@ class MarketDataNode(Node):
 
 class CalculationNode(Node):
     """
-    Class for performing calculations based on changed market variables
+    node that computes a formula based on parent dependencies
     Lazy evaluation: execution only occurs if a dependency is changed
     """
     def __init__(self, name: str, calc_func: Callable, *dependencies: Node):
