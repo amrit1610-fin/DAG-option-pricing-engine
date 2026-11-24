@@ -6,8 +6,8 @@ class Node(ABC):
     def __init__(self, name: str):
         self.name = name
         self.value: Any = None
-        self.is_dirty: bool = None
-        self.observers = List['Node'] = []
+        self.is_dirty: bool = True
+        self.observers: List['Node'] = []
 
     def add_observer(self, node: 'Node') -> None:
         "Add an observer to a parent node"
@@ -17,7 +17,7 @@ class Node(ABC):
     def notify_observers(self) -> None:
         "Pushes the 'dirty' state up the graph"
         for obs in self.observers:
-            if not in obs.is_dirty:
+            if not obs.is_dirty:
                 obs.mark_dirty()
 
     def mark_dirty(self) -> None:
@@ -50,14 +50,11 @@ class MarketDataNode(Node):
 
 
 class CalculationNode(Node):
-    """
-    node that computes a formula based on parent dependencies
-    Lazy evaluation: execution only occurs if a dependency is changed
-    """
-    def __init__(self, name: str, calc_func: Callable, *dependencies: Node):
+    def __init__(self, name: str, calc_function: Callable, *dependencies: Node):
         super().__init__(name)
-        self.calc_func = calc_func
+        self.calc_function = calc_function
         self.dependencies = dependencies
+        self.eval_count: int = 0  # Tracks actual math executions
 
         for dep in self.dependencies:
             dep.add_observer(self)
@@ -66,5 +63,6 @@ class CalculationNode(Node):
         if self.is_dirty:
             inputs = [dep.get_value() for dep in self.dependencies]
             self.value = self.calc_function(*inputs)
+            self.eval_count += 1
             self.is_dirty = False
         return self.value
